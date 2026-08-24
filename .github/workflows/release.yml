@@ -1,0 +1,62 @@
+name: Build and Release
+
+on:
+  push:
+    branches: [ master ]
+  workflow_dispatch:   # 支持手动触发
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout (with LFS)
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Compute version (build time)
+        id: version
+        run: echo "version=$(date +%Y%m%d.%H%M)" >> "$GITHUB_OUTPUT"
+
+      - name: Build release APK
+        run: |
+          chmod +x gradlew
+          ./gradlew :libbenusb:publish :app:assembleRelease --no-daemon
+        env:
+          ANDROID_HOME: ${{ env.ANDROID_HOME }}
+          ANDROID_SDK_ROOT: ${{ env.ANDROID_SDK_ROOT }}
+
+      - name: Create/Update Release and upload APK
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v1.0.${{ steps.version.outputs.version }}
+          name: v1.0.${{ steps.version.outputs.version }}
+          body: |
+            ## 自动发布
+
+            - 提交：${{ github.sha }}
+            - 构建时间：${{ steps.version.outputs.version }}
+            - 版本号：v1.0.${{ steps.version.outputs.version }}
+
+            ### 功能
+            - exFAT / FAT32 U 盘读写（exFAT 为自研 jnode 写入实现）
+            - 三列界面：U 盘列表 / 操作日志 / 测试统计
+            - 自动测试：写入 test.mp4（94.8MB）→ 测速 → 生成日志 → 删除
+            - 固定横屏、版本号按打包时间生成
+
+            ### 构建
+            - libbenusb：libaums 风格 USB 读写接口
+            - app：ViewModel + Compose UI
+          files: app/build/outputs/apk/release/app-release.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
