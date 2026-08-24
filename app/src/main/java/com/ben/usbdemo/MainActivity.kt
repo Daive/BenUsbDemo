@@ -85,10 +85,15 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        registerReceiver(usbReceiver, IntentFilter().apply {
-            addAction(ACTION_USB_PERMISSION)
-            addAction(UsbManager.ACTION_USB_DEVICE_DETACHED)
-        })
+        // Android 13+ 动态注册广播必须指定 exported 标志（系统 USB 广播需 EXPORTED）
+        registerReceiver(
+            usbReceiver,
+            IntentFilter().apply {
+                addAction(ACTION_USB_PERMISSION)
+                addAction(UsbManager.ACTION_USB_DEVICE_DETACHED)
+            },
+            Context.RECEIVER_EXPORTED
+        )
 
         handleAttachedIntent(intent)
 

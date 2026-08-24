@@ -19,6 +19,8 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
+        // 本地 libbenusb 仓库
+        maven { url = uri("$rootDir/repo") }
     }
 }
 
