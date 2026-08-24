@@ -1,0 +1,1 @@
+app/src/main/assets/test_files/c38-firmware.zip filter=lfs diff=lfs merge=lfs -text

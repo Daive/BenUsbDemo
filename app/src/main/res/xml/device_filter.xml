@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 匹配所有 USB 设备，具体是否为大容量存储设备交由 libaums 判断 -->
+    <usb-device />
+</resources>
