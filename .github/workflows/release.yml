@@ -24,6 +24,11 @@ jobs:
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
 
+      - name: Accept SDK licenses and install platforms
+        run: |
+          yes | sdkmanager --licenses > /dev/null 2>&1 || true
+          sdkmanager --install "platforms;android-37" "platforms;android-36" "build-tools;35.0.0" > /dev/null 2>&1 || true
+
       - name: Compute version (build time)
         id: version
         run: echo "version=$(date +%Y%m%d.%H%M)" >> "$GITHUB_OUTPUT"
@@ -35,6 +40,8 @@ jobs:
         env:
           ANDROID_HOME: ${{ env.ANDROID_HOME }}
           ANDROID_SDK_ROOT: ${{ env.ANDROID_SDK_ROOT }}
+          # 允许 AGP 自动下载缺失的 SDK 组件
+          ANDROID_AUTO_UPDATE_SDK_TOOLS: 1
 
       - name: Create/Update Release and upload APK
         uses: softprops/action-gh-release@v2
