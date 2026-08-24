@@ -21,6 +21,8 @@ dependencyResolutionManagement {
         mavenCentral()
         // 本地 libbenusb 仓库
         maven { url = uri("$rootDir/repo") }
+        // JitPack（libbenusb 发布）
+        maven { url = uri("https://jitpack.io") }
     }
 }
 

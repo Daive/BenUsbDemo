@@ -57,8 +57,8 @@ dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.11.0")
-    // USB 读取库（本地 maven 坐标，依赖自动传递，app 无需关心底层依赖）
-    implementation("com.ben:libbenusb:1.0.0")
+    // USB 读取库（JitPack 发布，依赖自动传递）
+    implementation("com.github.Daive.BenUsbDemo:libbenusb:v1.0.2")
     testImplementation(libs.junit)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)

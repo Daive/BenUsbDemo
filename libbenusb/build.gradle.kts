@@ -25,13 +25,17 @@ android {
     }
 }
 
-// 发布到本地 maven 仓库（AAR + pom，传递依赖自动解析，app 无需手动声明依赖）
+// 发布到 maven 仓库（本地 repo / JitPack）
+// JitPack 构建时使用其环境变量（GROUP/ARTIFACT/VERSION），本地构建回退到 com.ben:1.0.0
 publishing {
     publications {
         create<MavenPublication>("release") {
-            groupId = "com.ben"
+            val jpGroup = System.getenv("GROUP")
+            val jpArtifact = System.getenv("ARTIFACT")
+            val jpVersion = System.getenv("VERSION")
+            groupId = if (jpGroup != null && jpArtifact != null) "$jpGroup.$jpArtifact" else "com.ben"
             artifactId = "libbenusb"
-            version = "1.0.0"
+            version = jpVersion ?: "1.0.0"
             afterEvaluate {
                 from(components["release"])
             }
