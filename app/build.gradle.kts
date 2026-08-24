@@ -48,10 +48,8 @@ dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.11.0")
-    implementation("me.jahnen.libaums:core:0.10.0")
-    // jnode 源码已复制到项目（org/jnode），支持 exFAT；log4j 供 jnode 日志使用
-    implementation("log4j:log4j:1.2.17")
-    implementation("de.mindpipe.android:android-logging-log4j:1.0.3")
+    // USB 读取库（libaums + jnode exFAT 实现）
+    implementation(project(":libbenusb"))
     testImplementation(libs.junit)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)

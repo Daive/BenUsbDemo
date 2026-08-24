@@ -43,12 +43,11 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.lifecycleScope
+import com.ben.libbenusb.BenUsb
+import com.ben.libbenusb.BenUsbDevice
 import com.ben.usbdemo.ui.theme.UsbDemoTheme
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import me.jahnen.libaums.core.UsbMassStorageDevice
-import me.jahnen.libaums.core.fs.FileSystemFactory
-import me.jahnen.libaums.javafs.JavaFsFileSystemCreator
 
 class MainActivity : ComponentActivity() {
 
@@ -126,21 +125,11 @@ class MainActivity : ComponentActivity() {
 
     private val pendingPermission = HashSet<Int>()
 
-    /** 黑名单：排除设备内置的 MSC 控制器（MicroTech_MSC，STMicroelectronics 0x0483:0x572A） */
-    private val blacklist = setOf(
-        1155 to 22314,
-    )
-
-    private fun isBlacklisted(usbDevice: UsbDevice): Boolean {
-        return (usbDevice.vendorId to usbDevice.productId) in blacklist
-    }
-
     private fun refreshDevices() {
-        for (massDevice in UsbMassStorageDevice.getMassStorageDevices(this)) {
-            val usbDevice = massDevice.usbDevice
-            if (isBlacklisted(usbDevice)) continue
+        for (device in BenUsb.getMassStorageDevices(this)) {
+            val usbDevice = device.usbDevice
             if (usbManager.hasPermission(usbDevice)) {
-                viewModel.addDevice(massDevice)
+                viewModel.addDevice(device)
             } else if (pendingPermission.add(usbDevice.deviceId)) {
                 usbManager.requestPermission(usbDevice, permissionIntent)
             }
@@ -148,7 +137,6 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun handleAttachedDevice(usbDevice: UsbDevice) {
-        if (isBlacklisted(usbDevice)) return
         val massDevice = findMassDevice(usbDevice) ?: return
         if (usbManager.hasPermission(usbDevice)) {
             viewModel.addDevice(massDevice)
@@ -157,8 +145,8 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private fun findMassDevice(usbDevice: UsbDevice): UsbMassStorageDevice? {
-        return UsbMassStorageDevice.getMassStorageDevices(this)
+    private fun findMassDevice(usbDevice: UsbDevice): BenUsbDevice? {
+        return BenUsb.getMassStorageDevices(this)
             .firstOrNull { it.usbDevice.deviceId == usbDevice.deviceId }
     }
 
@@ -167,11 +155,6 @@ class MainActivity : ComponentActivity() {
         getParcelableExtra(UsbManager.EXTRA_DEVICE)
 
     private companion object {
-        init {
-            // 注册 java-fs 文件系统创建器，支持 exFAT/NTFS 等
-            FileSystemFactory.registerFileSystem(JavaFsFileSystemCreator())
-        }
-
         const val ACTION_USB_PERMISSION = "com.ben.usbdemo.USB_PERMISSION"
     }
 }

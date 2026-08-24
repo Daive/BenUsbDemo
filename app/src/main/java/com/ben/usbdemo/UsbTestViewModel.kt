@@ -15,12 +15,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import me.jahnen.libaums.core.UsbMassStorageDevice
-import me.jahnen.libaums.core.fs.FileSystem
-import me.jahnen.libaums.core.fs.UsbFile
-import me.jahnen.libaums.core.fs.UsbFileInputStream
-import me.jahnen.libaums.core.fs.UsbFileOutputStream
-import me.jahnen.libaums.javafs.wrapper.fs.FileSystemWrapper
+import com.ben.libbenusb.BenUsbDevice
+import com.ben.libbenusb.FileSystem
+import com.ben.libbenusb.UsbFile
+import com.ben.libbenusb.UsbFileOutputStream
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -55,7 +53,7 @@ private data class TestOutcome(
 )
 
 class UsbDeviceItem(
-    val massDevice: UsbMassStorageDevice,
+    val massDevice: BenUsbDevice,
     val usbDevice: UsbDevice,
     name: String,
 ) {
@@ -99,7 +97,7 @@ class UsbTestViewModel(application: Application) : AndroidViewModel(application)
         return target
     }
 
-    fun addDevice(massDevice: UsbMassStorageDevice) {
+    fun addDevice(massDevice: BenUsbDevice) {
         val usbDevice = massDevice.usbDevice
         if (devices.any { it.usbDevice.deviceId == usbDevice.deviceId }) return
 
@@ -190,9 +188,9 @@ class UsbTestViewModel(application: Application) : AndroidViewModel(application)
 
     private fun updateDeviceInfo(item: UsbDeviceItem) {
         runCatching {
-            val fs = item.massDevice.partitions.firstOrNull()?.fileSystem
+            val fs = item.massDevice.fileSystem
             if (fs != null) {
-                item.fileSystemType = fileSystemName(fs)
+                item.fileSystemType = item.massDevice.fileSystemTypeName ?: "未知"
                 item.capacityText = formatBytes(fs.capacity)
             }
         }
@@ -209,8 +207,8 @@ class UsbTestViewModel(application: Application) : AndroidViewModel(application)
         return "USB 设备 (${item.usbDevice.deviceId})"
     }
 
-    private fun performTest(massDevice: UsbMassStorageDevice): TestOutcome {
-        val fileSystem = massDevice.partitions.firstOrNull()?.fileSystem
+    private fun performTest(massDevice: BenUsbDevice): TestOutcome {
+        val fileSystem = massDevice.fileSystem
             ?: throw IllegalStateException("未找到可用文件系统")
         val root = fileSystem.rootDirectory
 
@@ -274,18 +272,6 @@ class UsbTestViewModel(application: Application) : AndroidViewModel(application)
         val speedText = String.format(Locale.US, "%.1f", speed) + " MB/s"
         val summary = "$TEST_ZIP_NAME 写入成功，速度 $speedText"
         return TestOutcome(summary, detail, speedText)
-    }
-
-    private fun fileSystemName(fs: FileSystem): String {
-        val simpleName = fs.javaClass.simpleName
-        return when {
-            simpleName == "FileSystemWrapper" ->
-                (fs as FileSystemWrapper).typeName.ifBlank { "其他" }
-            simpleName.contains("Fat32", ignoreCase = true) -> "FAT32"
-            simpleName.contains("Fat16", ignoreCase = true) -> "FAT16"
-            simpleName.contains("Fat12", ignoreCase = true) -> "FAT12"
-            else -> simpleName
-        }
     }
 
     private fun formatBytes(bytes: Long): String {

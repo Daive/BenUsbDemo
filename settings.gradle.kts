@@ -24,4 +24,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "UsbDemo"
 include(":app")
- 
+include(":libbenusb")

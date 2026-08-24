@@ -18,15 +18,25 @@ Android USB U 盘读写测试应用。基于 libaums（USB Mass Storage）+ jnod
 ## 技术架构
 
 ```
-App (Compose UI)
- └─ UsbTestViewModel（设备管理 / 测试流程 / 统计）
-     └─ libaums core 0.10.0（USB/SCSI 层、FAT32）
-         └─ javafs wrapper（me.jahnen.libaums.javafs）
-             └─ jnode 文件系统源码（org.jnode，LGPL）
-                 └─ exFAT 写实现（自研扩展）
+app（业务逻辑 + UI）
+ ├─ MainActivity（USB 权限/监听、Compose 三列界面）
+ └─ UsbTestViewModel（设备管理 / 测试流程 / 统计 / 日志）
+     └─ libbenusb（USB 读取库，com.ben.libbenusb）
+         ├─ BenUsb / BenUsbDevice（设备枚举/挂载/文件系统接口）
+         ├─ libaums core（USB/SCSI 层、FAT32）
+         └─ jnode 文件系统源码（org.jnode，LGPL）
+             └─ exFAT 写实现（自研扩展）
 ```
 
-exFAT 写实现位于 `app/src/main/java/org/jnode/fs/exfat/`，自研补充了：
+### libbenusb 对外接口（libaums 风格）
+
+| 接口 | 说明 |
+|------|------|
+| `BenUsb.getMassStorageDevices(context)` | 枚举大容量存储设备（含黑名单过滤、exFAT 自动注册） |
+| `BenUsbDevice` | `usbDevice` / `init()` / `close()` / `partitions` / `fileSystem` / `fileSystemTypeName` |
+| `UsbFile` / `FileSystem` / 流 | typealias 重新导出，可直接读写文件 |
+
+exFAT 写实现位于 `libbenusb/src/main/java/org/jnode/fs/exfat/`，自研补充了：
 - `NodeDirectory`：目录条目创建（file/stream/name + 校验和 + 名称哈希）、删除、元数据写回
 - `NodeFile`：长度扩展、连续簇批量写入（性能优化）、flush 持久化
 - `ClusterBitMap`：批量 bitmap 分配（预分配 121MB 仅需 22ms）
