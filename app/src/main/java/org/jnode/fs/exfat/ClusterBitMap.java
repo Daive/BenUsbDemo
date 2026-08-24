@@ -130,9 +130,7 @@ public final class ClusterBitMap {
                         run++;
                         if (run >= need) {
                             final long first = Cluster.FIRST_DATA_CLUSTER + runStart;
-                            for (long k = 0; k < need; k++) {
-                                setClusterUsed(first + k, true);
-                            }
+                            markRangeUsed(first, need);
                             return first;
                         }
                     } else {
@@ -159,6 +157,51 @@ public final class ClusterBitMap {
             }
         }
         return true;
+    }
+
+    /**
+     * 批量将 {@code count} 个连续簇标记为已用（整块读-改-写 bitmap，
+     * 避免逐字节 USB 写导致性能问题）。
+     */
+    public void markRangeUsed(long startCluster, long count) throws IOException {
+        final long firstBit = startCluster - Cluster.FIRST_DATA_CLUSTER;
+        final int bpc = sb.getBytesPerCluster();
+        final long totalBytes = (this.clusterCount + 7) / 8;
+
+        // 读整个 bitmap 到内存
+        final byte[] bits = new byte[(int) totalBytes];
+        long cluster = this.startCluster;
+        int off = 0;
+        while (off < bits.length) {
+            final int chunk = Math.min(bpc, bits.length - off);
+            final ByteBuffer buf = ByteBuffer.allocate(chunk);
+            buf.order(ByteOrder.LITTLE_ENDIAN);
+            da.read(buf, sb.clusterToOffset(cluster));
+            buf.rewind();
+            buf.get(bits, off, chunk);
+            off += chunk;
+            cluster++;
+        }
+
+        // 内存中标记位
+        for (long i = 0; i < count; i++) {
+            final long bit = firstBit + i;
+            bits[(int) (bit / 8)] |= (1 << (bit % 8));
+        }
+
+        // 写回整个 bitmap
+        cluster = this.startCluster;
+        off = 0;
+        while (off < bits.length) {
+            final int chunk = Math.min(bpc, bits.length - off);
+            final ByteBuffer buf = ByteBuffer.allocate(chunk);
+            buf.order(ByteOrder.LITTLE_ENDIAN);
+            buf.put(bits, off, chunk);
+            buf.rewind();
+            da.write(buf, sb.clusterToOffset(cluster));
+            off += chunk;
+            cluster++;
+        }
     }
 
     /**

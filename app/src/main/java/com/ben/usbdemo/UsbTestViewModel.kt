@@ -222,9 +222,11 @@ class UsbTestViewModel(application: Application) : AndroidViewModel(application)
         val zipSource = ensureTestFile()
 
         // 1. 写入 zip（速度测试）
-        val start = System.currentTimeMillis()
+        val tPre = System.currentTimeMillis()
         val zipUsb: UsbFile = testDir.createFile(TEST_ZIP_NAME)
         zipUsb.length = zipSource.length()
+        Log.d(TAG, "setLength 预分配耗时：${System.currentTimeMillis() - tPre}ms")
+        val start = System.currentTimeMillis()
         val buffer = ByteArray(1024 * 1024) // 1MB，保证整簇写入
         zipSource.inputStream().use { input ->
             val os = UsbFileOutputStream(zipUsb)
