@@ -1,7 +1,16 @@
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
 }
+
+// 打包时间戳版本号（每次打包自动生成，格式：yyyyMMdd.HHmm）
+val buildTime = SimpleDateFormat("yyyyMMdd.HHmm", Locale.US).format(Date())
+// versionCode 按打包日期生成（yyyyMMdd）
+val buildDate = SimpleDateFormat("yyyyMMdd", Locale.US).format(Date()).toInt()
 
 android {
     namespace = "com.ben.usbdemo"
@@ -13,8 +22,8 @@ android {
         applicationId = "com.ben.usbdemo"
         minSdk = 24
         targetSdk = 36
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = buildDate
+        versionName = "1.0.$buildTime"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }

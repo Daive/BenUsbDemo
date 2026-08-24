@@ -82,14 +82,14 @@ class UsbTestViewModel(application: Application) : AndroidViewModel(application)
     }
 
     /**
-     * 确保 c38-firmware.zip 已复制到内部存储（打包在 assets 中）。
+     * 确保测试文件已复制到内部存储（打包在 assets 中）。
      */
     private fun ensureTestFile(): File {
         val app = getApplication<Application>()
-        val target = File(File(app.filesDir, TEST_FILE_DIR), TEST_ZIP_NAME)
+        val target = File(File(app.filesDir, TEST_FILE_DIR), TEST_FILE_NAME)
         if (!target.exists() || target.length() == 0L) {
             target.parentFile?.mkdirs()
-            app.assets.open("$TEST_FILE_DIR/$TEST_ZIP_NAME").use { input ->
+            app.assets.open("$TEST_FILE_DIR/$TEST_FILE_NAME").use { input ->
                 target.outputStream().use { out -> input.copyTo(out) }
             }
             Log.d(TAG, "测试文件已写入内部存储：${target.absolutePath} (${target.length()} bytes)")
@@ -221,7 +221,7 @@ class UsbTestViewModel(application: Application) : AndroidViewModel(application)
 
         // 1. 写入 zip（速度测试）
         val tPre = System.currentTimeMillis()
-        val zipUsb: UsbFile = testDir.createFile(TEST_ZIP_NAME)
+        val zipUsb: UsbFile = testDir.createFile(TEST_FILE_NAME)
         zipUsb.length = zipSource.length()
         Log.d(TAG, "setLength 预分配耗时：${System.currentTimeMillis() - tPre}ms")
         val start = System.currentTimeMillis()
@@ -248,7 +248,7 @@ class UsbTestViewModel(application: Application) : AndroidViewModel(application)
         val logName = "test_$timestamp.log"
         val logContent = buildString {
             append("hello$timestamp\n")
-            append("测试文件：$TEST_ZIP_NAME\n")
+            append("测试文件：$TEST_FILE_NAME\n")
             append("文件大小：${formatBytes(zipSource.length())}\n")
             append("写入耗时：${elapsed}ms\n")
             append("写入速度：${String.format(Locale.US, "%.1f", speed)} MB/s\n")
@@ -265,12 +265,12 @@ class UsbTestViewModel(application: Application) : AndroidViewModel(application)
         runCatching { zipUsb.delete() }
 
         val detail = listOf(
-            "$TEST_ZIP_NAME：${formatBytes(zipSource.length())}，耗时 ${elapsed}ms，" +
+            "$TEST_FILE_NAME：${formatBytes(zipSource.length())}，耗时 ${elapsed}ms，" +
                 "速度 ${String.format(Locale.US, "%.1f", speed)} MB/s",
             "已生成日志 $logName（保留）"
         )
         val speedText = String.format(Locale.US, "%.1f", speed) + " MB/s"
-        val summary = "$TEST_ZIP_NAME 写入成功，速度 $speedText"
+        val summary = "$TEST_FILE_NAME 写入成功，速度 $speedText"
         return TestOutcome(summary, detail, speedText)
     }
 
@@ -330,7 +330,7 @@ class UsbTestViewModel(application: Application) : AndroidViewModel(application)
         const val TAG = "UsbTest"
         const val TEST_DIR_NAME = "test"
         const val TEST_FILE_DIR = "test_files"
-        const val TEST_ZIP_NAME = "c38-firmware.zip"
+        const val TEST_FILE_NAME = "test.mp4"
         const val MAX_LOGS = 800
     }
 }
